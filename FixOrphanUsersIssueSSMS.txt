@@ -1,0 +1,34 @@
+  -- To map logins to users, step 1
+DECLARE @sql VARCHAR(2000)
+DECLARE curSQL CURSOR
+FOR
+       SELECT   'EXEC sp_change_users_login ''UPDATE_ONE'', ''' + name + ''', ''' + name + ''''
+       FROM     sysusers
+       WHERE    issqluser = 1
+                AND name NOT IN ( 'guest', 'dbo', 'sys', 'INFORMATION_SCHEMA' )
+OPEN curSQL
+FETCH curSQL INTO @sql
+WHILE @@FETCH_STATUS = 0 
+     BEGIN
+           EXEC (
+           @sql
+           )
+           FETCH curSQL INTO @sql
+     END
+CLOSE curSQL
+DEALLOCATE curSQL
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SET NOCOUNT ON
+-- grant db_owner to all users.
+EXEC sp_msforeachdb 'USE [?]
+IF ''?'' IN (''ddAldiIntDQ'', ''DataDialysis'', ''MC'')
+SELECT (''USE [?]; CREATE USER [''+name+''] FOR LOGIN = [''+name+''] ;
+ALTER ROLE [db_owner] ADD MEMBER [''+name +''];'') FROM sys.server_principals dp WHERE [type] IN ( ''s'')
+      AND is_disabled=0 AND
+      (
+          sid IS NOT NULL
+          AND sid <> 0
+          AND principal_id<>1
+      );'

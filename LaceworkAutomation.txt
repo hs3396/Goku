@@ -1,0 +1,24 @@
+$ServerList = Get-Content c:\serverlist.txt
+$sourcefile = "c:\LaceworkAgent\*.*"
+#This section will install the software
+foreach ($server in $ServerList)
+{
+    $hostname = [System.Net.DNS]::GetHostbyAddress("$server").hostname
+    $destinationFolder = "\\$hostname\C$\LaceworksAgent"
+    #This section will copy the $sourcefile to the $destinationfolder. If the Folder does not exist it will create it.
+    if (!(Test-Path -path $destinationFolder))
+    {
+        New-Item $destinationFolder -Type Directory
+    }
+    Copy-Item -Path $sourcefile -Destination $destinationFolder
+    Write-Host "Copied Successfully"
+    try
+    {
+      Invoke-Command -ComputerName $hostname -ScriptBlock { & cmd /c "msiexec.exe /i c:\LaceworksAgent\LWDataCollector.msi" CONFIGFILE=c:\LaceworksAgent\config.json /qn  }
+      Write-Host "Installed Successfully on $hostname :: $server" -BackgroundColor Green 
+      }
+      catch
+      {
+        Write-Host "Installed Failed on $hostname :: $server" -BackgroundColor Red
+      } 
+}

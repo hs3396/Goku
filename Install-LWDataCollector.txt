@@ -1,0 +1,66 @@
+<#
+.SYNOPSIS
+    A script that will download and install the Lacework Windows Agent.
+.DESCRIPTION
+    This script will download and install the Lacework Windows Agent.
+    The agent can be installed either by using a config JSON file or by passing the Lacework instance and Access Token.
+    Other options are available to attempt to add a Windows Firewall/Defender rule for the agent executable.
+.NOTES
+    This function is only supported for the Windows Agent install.  Please see the Lacework documentation (https://docs.lacework.com/category/linux-agent-installation-options) on options for installing the Linux Agent.
+    Usage:
+     With configfile:   .\Install-LWDataCollector.ps1 -MSIURL <MSI_DOWNLOAD_URL> -ConfigPath C:\configalpha3.json
+     With access token: .\Install-LWDataCollector.ps1 -MSIURL <MSI_DOWNLOAD_URL> -AccessToken <ACCESS_TOKEN> -ServerURL <SERVER_URL>
+  -MSIURL
+      Examples: https://updates.lacework.net/windows/GA-1.0.0.2345/LWDataCollector.msi
+  -ServerURL
+      Examples:
+        https://api.lacework.net - US
+        https://api.fra.lacework.net - EU Frankfurt
+        https://auprodn1.agent.lacework.net- AU
+#>
+
+[CmdletBinding(DefaultParameterSetName = 'AccessToken')]
+param (
+    [Parameter(ParameterSetName = 'ConfigFile', Mandatory = $true)]
+    [ValidateScript({
+        if(-not ($_ | Test-Path) ){
+            throw "Invalid path to config file specified: $_"
+        }
+        if(-not ($_ | Test-Path -PathType Leaf) ){
+            throw "The ConfigFile parameter must be a file but a directory was specified."
+        }
+        if($_.Extension -ne ".json"){
+            throw "The file specified for ConfigFile was not a json file."
+        }
+        return $true
+    })]
+    [System.IO.FileInfo]$ConfigPath,
+
+    [Parameter(ParameterSetName = 'AccessToken', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+	[string]$AccessToken,
+
+    [Parameter(ParameterSetName = 'AccessToken', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+	[string]$ServerURL,
+
+    [Parameter(ParameterSetName = 'AccessToken')]
+    [Parameter(ParameterSetName = 'ConfigFile')]
+    [string]$MSIURL,
+
+    [Parameter(ParameterSetName = 'AccessToken')]
+    [Parameter(ParameterSetName = 'ConfigFile')]
+    [switch]$Defender
+)
+
+$Installer = "LWDataCollector.msi"
+
+Function InstallWithConfig($configPath) {
+    Write-Output "Installing Lacework Windows Agent using config file: $configPath"
+    $lacework = (Start-Process msiexec.exe -ArgumentList "/i",$Installer,"CONFIGFILE=$($configPath)","/passive" -NoNewWindow -Wait -PassThru)
+    if ($lacework.ExitCode -ne 0) {
+        Write-Error "Error installing Lacework Windows Agent"
+        exit 1
+    }
+
+}

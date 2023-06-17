@@ -1,0 +1,41 @@
+CREATE LOGIN [MirzaB] WITH PASSWORD = 'D4Rd7bJ345qWtvjdy' , CHECK_POLICY = OFF;
+ 
+--requires SQL login to exist
+ 
+--creates user and adds as dbowner for all 'existing' dbs
+sp_msforeachdb 'IF DB_ID(''?'') > 4
+BEGIN
+use [?]
+CREATE USER [MirzaB] FOR LOGIN [MirzaB]
+ALTER ROLE [db_owner] ADD MEMBER [MirzaB] 
+END'
+ 
+--creates user and adds as dbowner for all 'new' dbs
+USE model
+CREATE USER [MirzaB] FOR LOGIN [MirzaB]
+ALTER ROLE [db_owner] ADD MEMBER [MirzaB] 
+ 
+--serverroles processadmin and dbcreator
+ALTER SERVER ROLE [processadmin] ADD MEMBER [MirzaB] 
+ALTER SERVER ROLE [dbcreator] ADD MEMBER [MirzaB] 
+ 
+--grants read access to model for proper 'create new db' actions (not script as)
+USE model
+ALTER ROLE [db_datareader] ADD MEMBER [MirzaB] 
+
+
+
+SQL logins Mapping
+
+sp_change_users_login 'update_one','LarryR','LarryR';
+
+sp_change_users_login 'update_one','LarryR','LarryR';
+
+sp_msforeachdb 'IF DB_ID(''?'') > 4
+
+BEGIN
+use [?]Exec sp_change_users_login ''update_one'',''LarryR'',''LarryR'';
+
+END'
+
+ 

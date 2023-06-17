@@ -1,0 +1,14 @@
+USE [admin] 
+EXECUTE 
+
+
+[dbo].[syncosp_create_userdb] @DBName='CONSTRUCT'
+
+
+use admin;
+
+select * from admin.dbo.DBCreateScripts 
+
+sp_who2
+
+kill 64
